@@ -1,11 +1,10 @@
-// src/app/page.tsx
-
 "use client";
+
 import { useRef, useState, useEffect } from "react";
 import { Play, Pause, Volume2, Maximize } from "lucide-react";
 
 export default function Home() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -45,17 +44,17 @@ export default function Home() {
       <div className="w-full max-w-4xl aspect-video relative group rounded-lg overflow-hidden shadow-lg">
         <video
           ref={videoRef}
-          src="https://your-supabase-url.supabase.co/storage/v1/object/public/videos/video.mp4"
+          src="https://fdhdccjrmpwuyzptuhsd.supabase.co/storage/v1/object/public/videos/video.mp4"
           className="w-full h-full object-cover"
           poster="/thumbnail.jpg"
         />
 
-        {/* Kontrol video */}
+        {/* Kontrol */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
           <input
             type="range"
             value={progress}
-            onChange={() => {}}
+            readOnly
             className="w-full h-1 accent-red-500"
           />
 
