@@ -1,85 +1,65 @@
-// ==== app/profile/page.js ====
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
-  const [username, setUsername] = useState('');
-  const [avatar, setAvatar] = useState('');
-  const router = useRouter();
+  const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUser(user);
-        setUsername(user.user_metadata?.username || '');
-        setAvatar(user.user_metadata?.avatar || '');
-      } else {
-        router.push('/auth');
-      }
-    });
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
   }, []);
 
-  const updateProfile = async () => {
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        username,
-        avatar
-      }
-    });
-    if (error) alert(error.message);
-    else alert('Profil berhasil diperbarui.');
-  };
+  const handleUpload = async () => {
+    if (!image || !user) return;
+    const fileExt = image.name.split('.').pop();
+    const filePath = `avatars/${user.id}.${fileExt}`;
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    const { error } = await supabase.storage.from('avatars').upload(filePath, image, {
+      cacheControl: '3600',
+      upsert: true
+    });
+
+    if (!error) {
+      const { data: urlData } = await supabase.storage.from('avatars').getPublicUrl(filePath);
+      await supabase.from('profiles').update({ avatar_url: urlData.publicUrl }).eq('id', user.id);
+      alert('Foto profil berhasil diunggah!');
+    } else {
+      console.error(error);
+      alert('Gagal mengunggah foto profil.');
+    }
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '2rem auto', background: '#222', padding: '2rem', borderRadius: '12px' }}>
-      <h2>Profil Saya</h2>
+    <div className="p-8 max-w-xl mx-auto bg-white rounded-xl shadow-md space-y-4">
+      <h2 className="text-2xl font-semibold text-center">Profil Saya</h2>
+      {preview && <img src={preview} alt="Preview" width={120} className="rounded-full mx-auto" />}
       <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Nama Pengguna"
-        style={inputStyle}
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          const file = e.target.files[0];
+          setImage(file);
+          setPreview(URL.createObjectURL(file));
+        }}
+        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
       />
-      <input
-        type="text"
-        value={avatar}
-        onChange={(e) => setAvatar(e.target.value)}
-        placeholder="URL Foto Profil"
-        style={inputStyle}
-      />
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <button onClick={updateProfile} style={btnStyle}>Simpan</button>
-        <button onClick={() => router.push('/')} style={{ ...btnStyle, background: '#888' }}>Kembali</button>
-        <button onClick={logout} style={{ ...btnStyle, background: '#f44336' }}>Logout</button>
-      </div>
+      <button
+        onClick={handleUpload}
+        className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+      >
+        Upload Foto Profil
+      </button>
     </div>
   );
 }
-
-const inputStyle = {
-  width: '100%',
-  padding: '0.5rem',
-  marginBottom: '1rem',
-  borderRadius: '8px',
-  border: 'none',
-};
-
-const btnStyle = {
-  flex: 1,
-  padding: '0.75rem',
-  background: '#4caf50',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-};
