@@ -14,7 +14,6 @@ export default function Home() {
   const [videoList, setVideoList] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -77,27 +76,22 @@ export default function Home() {
     }
   };
 
-  const handleLogin = async () => {
-    const email = prompt("Email:");
-    const password = prompt("Password:");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) alert("Login gagal: " + error.message);
   };
 
   const handleRegister = async () => {
-    const email = prompt("Email untuk daftar:");
-    const password = prompt("Password:");
     const { error } = await supabase.auth.signUp({ email, password });
-
     if (error) alert("Gagal daftar: " + error.message);
     else alert("Cek email kamu untuk verifikasi.");
   };
 
   const loginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
+    await supabase.auth.signInWithOAuth({ provider: "google" });
   };
 
   const handleLogout = async () => {
@@ -107,33 +101,39 @@ export default function Home() {
 
   return (
     <div style={{ background: "#111", minHeight: "100vh", padding: "1rem", color: "#fff" }}>
-      <div style={{ position: "fixed", top: "1rem", right: "1rem" }}>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          style={{ background: "#333", color: "#fff", border: "none", padding: "0.5rem", borderRadius: "8px" }}
-        >
-          ☰
-        </button>
-        {menuOpen && (
-          <div style={{ position: "absolute", right: 0, top: "2.5rem", background: "#222", padding: "1rem", borderRadius: "8px" }}>
-            {user ? (
-              <>
-                <button onClick={handleLogout} style={{ display: "block", marginBottom: "0.5rem" }}>Logout</button>
-                <input type="file" accept="video/*" onChange={handleVideoUpload} disabled={uploading} />
-                {uploading && <p style={{ fontSize: "0.8rem" }}>Mengunggah...</p>}
-              </>
-            ) : (
-              <>
-                <button onClick={handleLogin} style={{ display: "block", marginBottom: "0.5rem" }}>Login Manual</button>
-                <button onClick={handleRegister} style={{ display: "block", marginBottom: "0.5rem" }}>Daftar</button>
-                <button onClick={loginWithGoogle}>Login dengan Google</button>
-              </>
-            )}
-          </div>
+      <div style={{ maxWidth: "600px", margin: "3rem auto", background: "#222", padding: "2rem", borderRadius: "12px" }}>
+        {!user ? (
+          <>
+            <h2 style={{ textAlign: "center" }}>🔐 Login atau Daftar</h2>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem", borderRadius: "8px", border: "none" }}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem", borderRadius: "8px", border: "none" }}
+            />
+            <button onClick={handleLogin} style={{ width: "100%", padding: "0.75rem", marginBottom: "0.5rem", background: "#4caf50", color: "white", border: "none", borderRadius: "8px" }}>Login</button>
+            <button onClick={handleRegister} style={{ width: "100%", padding: "0.75rem", marginBottom: "0.5rem", background: "#2196f3", color: "white", border: "none", borderRadius: "8px" }}>Daftar</button>
+            <button onClick={loginWithGoogle} style={{ width: "100%", padding: "0.75rem", background: "#f44336", color: "white", border: "none", borderRadius: "8px" }}>Login dengan Google</button>
+          </>
+        ) : (
+          <>
+            <p>👋 Hai, {user.email}</p>
+            <button onClick={handleLogout} style={{ marginBottom: "1rem", background: "#555", color: "white", border: "none", borderRadius: "6px", padding: "0.5rem 1rem" }}>Logout</button>
+            <input type="file" accept="video/*" onChange={handleVideoUpload} disabled={uploading} style={{ display: "block", marginBottom: "1rem" }} />
+            {uploading && <p>Mengunggah...</p>}
+          </>
         )}
       </div>
 
-      <div style={{ maxWidth: "900px", margin: "4rem auto 1rem" }}>
+      <div style={{ maxWidth: "900px", margin: "2rem auto 1rem" }}>
         <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>🎥 Koleksi Video Publik</h2>
 
         {currentVideo && (
