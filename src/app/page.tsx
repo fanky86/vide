@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Play, Pause, Volume2, Maximize } from "lucide-react";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -40,53 +39,135 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl aspect-video relative group rounded-lg overflow-hidden shadow-lg">
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "black",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1.5rem",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "800px",
+          aspectRatio: "16 / 9",
+          position: "relative",
+          borderRadius: "12px",
+          overflow: "hidden",
+          boxShadow:
+            "0 4px 20px rgba(0,0,0,0.5), 0 0 10px rgba(255,0,0,0.5)",
+        }}
+      >
         <video
           ref={videoRef}
-          src="https://fdhdccjrmpwuyzptuhsd.supabase.co/storage/v1/object/public/videos/video.mp4"
-          className="w-full h-full object-cover"
+          src="https://fdhdccjrmpwuyzptuhsd.supabase.co/storage/v1/object/public/videos/demo.mp4"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
           poster="/thumbnail.jpg"
+          controls={false}
         />
 
-        {/* Kontrol */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to top, rgba(0,0,0,0.7), transparent)",
+            opacity: 0,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            padding: "1rem",
+            transition: "opacity 0.3s ease",
+          }}
+          className="video-controls"
+        >
           <input
             type="range"
             value={progress}
             readOnly
-            className="w-full h-1 accent-red-500"
+            style={{
+              width: "100%",
+              height: "6px",
+              accentColor: "red",
+              cursor: "pointer",
+            }}
           />
 
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-3">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "0.75rem",
+              color: "white",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ display: "flex", gap: "1rem" }}>
               <button
                 onClick={togglePlay}
-                className="p-2 bg-white/10 rounded-full hover:bg-white/20"
+                style={{
+                  padding: "0.5rem",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  borderRadius: "50%",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                }}
+                aria-label={isPlaying ? "Pause" : "Play"}
               >
-                {isPlaying ? (
-                  <Pause size={20} className="text-white" />
-                ) : (
-                  <Play size={20} className="text-white" />
-                )}
+                {isPlaying ? "⏸️" : "▶️"}
               </button>
 
-              <button className="p-2 bg-white/10 rounded-full hover:bg-white/20">
-                <Volume2 size={20} className="text-white" />
-              </button>
-            </div>
-
-            <div>
               <button
-                onClick={handleFullscreen}
-                className="p-2 bg-white/10 rounded-full hover:bg-white/20"
+                onClick={() => {
+                  if (!videoRef.current) return;
+                  videoRef.current.muted = !videoRef.current.muted;
+                }}
+                style={{
+                  padding: "0.5rem",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  borderRadius: "50%",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1.25rem",
+                }}
+                aria-label="Mute/Unmute"
               >
-                <Maximize size={20} className="text-white" />
+                🔈
               </button>
             </div>
+
+            <button
+              onClick={handleFullscreen}
+              style={{
+                padding: "0.5rem",
+                backgroundColor: "rgba(255,255,255,0.2)",
+                borderRadius: "50%",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1.25rem",
+              }}
+              aria-label="Fullscreen"
+            >
+              ⛶
+            </button>
           </div>
         </div>
       </div>
+
+      <style>{`
+        .video-controls {
+          opacity: 0;
+        }
+        div:hover > .video-controls,
+        div:focus-within > .video-controls,
+        div.group:hover > .video-controls {
+          opacity: 1 !important;
+        }
+      `}</style>
     </div>
   );
 }
