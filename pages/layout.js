@@ -1,8 +1,17 @@
-// ==== app/layout.js ====
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: 'Arial, sans-serif', backgroundColor: '#111', color: 'white' }}>
+      <body
+        style={{
+          margin: 0,
+          fontFamily: 'Arial, sans-serif',
+          backgroundColor: '#111',
+          color: 'white',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {children}
       </body>
     </html>
