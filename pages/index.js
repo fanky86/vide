@@ -1,5 +1,6 @@
 "use client";
 
+import AuthDropdown from "../components/AuthDropdown";
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
@@ -89,6 +90,7 @@ export default function Home() {
   };
 
   return (
+    <AuthDropdown user={user} onLogout={handleLogout} />
     <div style={{ background: "#111", minHeight: "100vh", padding: "1rem", color: "#fff" }}>
       <div style={{ position: "fixed", top: "1rem", right: "1rem" }}>
         <button
