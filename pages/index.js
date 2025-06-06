@@ -18,13 +18,14 @@ export default function Home() {
   const [uploading, setUploading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Login form
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  // Modal & form login/register
+  const [showAuthForm, setShowAuthForm] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loadingLogin, setLoadingLogin] = useState(false);
+  const [loadingAuth, setLoadingAuth] = useState(false);
 
-  // Load session & videos on mount
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
@@ -41,7 +42,6 @@ export default function Home() {
     };
   }, []);
 
-  // Ambil daftar video
   async function fetchVideos() {
     const { data, error } = await supabase.storage
       .from("videos")
@@ -66,7 +66,6 @@ export default function Home() {
     }
   }
 
-  // Upload video handler
   async function handleUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -85,7 +84,6 @@ export default function Home() {
     e.target.value = null;
   }
 
-  // Hapus video
   async function handleDelete(fileName) {
     if (!confirm(`Hapus video "${fileName}"?`)) return;
 
@@ -98,23 +96,46 @@ export default function Home() {
     }
   }
 
-  // Login submit
-  async function handleLoginSubmit(e) {
+  async function handleAuthSubmit(e) {
     e.preventDefault();
-    setLoadingLogin(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert("Login gagal: " + error.message);
+    setLoadingAuth(true);
+
+    if (isRegister) {
+      // Register user baru
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (error) {
+        alert("Registrasi gagal: " + error.message);
+        setLoadingAuth(false);
+        return;
+      }
+      alert(
+        "Registrasi berhasil! Silakan cek email kamu untuk verifikasi (kalau diaktifkan). Jika tidak ada verifikasi, kamu sudah bisa login."
+      );
+      // Otomatis login setelah signUp tidak selalu aktif, jadi kita minta login manual:
+      setIsRegister(false);
+      setEmail("");
+      setPassword("");
+      setLoadingAuth(false);
+      return;
     } else {
-      setShowLoginForm(false);
+      // Login
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert("Login gagal: " + error.message);
+        setLoadingAuth(false);
+        return;
+      }
+      setShowAuthForm(false);
       setEmail("");
       setPassword("");
       alert("Login berhasil!");
+      setLoadingAuth(false);
     }
-    setLoadingLogin(false);
   }
 
-  // Logout
   async function handleLogout() {
     await supabase.auth.signOut();
     alert("Logout berhasil!");
@@ -188,7 +209,7 @@ export default function Home() {
             ) : (
               <button
                 onClick={() => {
-                  setShowLoginForm(true);
+                  setShowAuthForm(true);
                   setMenuOpen(false);
                 }}
                 style={{
@@ -202,17 +223,17 @@ export default function Home() {
                   fontWeight: "bold",
                 }}
               >
-                Login
+                Login / Register
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Form login modal */}
-      {showLoginForm && (
+      {/* Modal form login/register */}
+      {showAuthForm && (
         <div
-          onClick={() => setShowLoginForm(false)}
+          onClick={() => setShowAuthForm(false)}
           style={{
             position: "fixed",
             inset: 0,
@@ -225,7 +246,7 @@ export default function Home() {
         >
           <form
             onClick={(e) => e.stopPropagation()}
-            onSubmit={handleLoginSubmit}
+            onSubmit={handleAuthSubmit}
             style={{
               background: "#222",
               padding: "2rem",
@@ -238,7 +259,9 @@ export default function Home() {
               boxShadow: "0 0 10px #000",
             }}
           >
-            <h2 style={{ margin: 0, marginBottom: 8, textAlign: "center" }}>Login</h2>
+            <h2 style={{ margin: 0, marginBottom: 8, textAlign: "center" }}>
+              {isRegister ? "Register" : "Login"}
+            </h2>
 
             <input
               type="email"
@@ -262,7 +285,7 @@ export default function Home() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              autoComplete="current-password"
+              autoComplete={isRegister ? "new-password" : "current-password"}
               style={{
                 padding: "0.6rem",
                 borderRadius: 6,
@@ -274,7 +297,7 @@ export default function Home() {
             />
             <button
               type="submit"
-              disabled={loadingLogin}
+              disabled={loadingAuth}
               style={{
                 background: "#27ae60",
                 color: "#fff",
@@ -285,19 +308,37 @@ export default function Home() {
                 cursor: "pointer",
               }}
             >
-              {loadingLogin ? "Loading..." : "Login"}
+              {loadingAuth ? "Loading..." : isRegister ? "Register" : "Login"}
             </button>
+
             <button
               type="button"
-              onClick={() => setShowLoginForm(false)}
+              onClick={() => setIsRegister(!isRegister)}
               style={{
-                background: "#e74c3c",
-                color: "#fff",
-                padding: "0.8rem",
-                borderRadius: 8,
+                background: "transparent",
+                color: "#27ae60",
+                padding: "0.5rem 0",
                 border: "none",
                 cursor: "pointer",
-                marginTop: 4,
+                textDecoration: "underline",
+              }}
+            >
+              {isRegister
+                ? "Sudah punya akun? Login di sini"
+                : "Belum punya akun? Register di sini"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAuthForm(false)}
+              style={{
+                background: "transparent",
+                color: "#ccc",
+                padding: "0.5rem 0",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 14,
+                marginTop: 8,
               }}
             >
               Batal
@@ -306,92 +347,92 @@ export default function Home() {
         </div>
       )}
 
-      {/* Konten utama */}
+      {/* Video Player */}
       <main
         style={{
-          maxWidth: 900,
-          margin: "5rem auto 3rem",
+          maxWidth: 800,
+          margin: "4rem auto 2rem",
           padding: "0 1rem",
-          color: "#eee",
           userSelect: "none",
         }}
       >
-        <h1 style={{ textAlign: "center", marginBottom: 24 }}>🎥 Koleksi Video Publik</h1>
+        <h1
+          style={{
+            fontWeight: "bold",
+            textAlign: "center",
+            color: "#eee",
+            textShadow: "0 0 4px #000",
+          }}
+        >
+          Video Player
+        </h1>
 
         {currentVideo ? (
           <video
             ref={videoRef}
-            src={currentVideo}
+            key={currentVideo}
             controls
-            autoPlay
-            style={{ width: "100%", borderRadius: 12, background: "#000" }}
+            src={currentVideo}
+            style={{ width: "100%", borderRadius: 12 }}
           />
         ) : (
-          <p style={{ textAlign: "center" }}>Belum ada video.</p>
+          <p style={{ color: "#bbb", textAlign: "center" }}>Tidak ada video</p>
         )}
 
-        <section
+        <div
           style={{
-            marginTop: 24,
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))",
-            gap: 16,
-            maxHeight: 500,
-            overflowY: "auto",
-            paddingRight: 8,
+            marginTop: 16,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 10,
+            justifyContent: "center",
           }}
         >
-          {videos.map((video) => (
+          {videos.map(({ name, url }) => (
             <div
-              key={video.name}
+              key={name}
               style={{
                 position: "relative",
-                cursor: "pointer",
-                borderRadius: 12,
+                borderRadius: 10,
                 overflow: "hidden",
-                border: currentVideo === video.url ? "3px solid #27ae60" : "3px solid transparent",
+                cursor: "pointer",
+                boxShadow: currentVideo === url ? "0 0 10px #27ae60" : "none",
+                border: currentVideo === url ? "2px solid #27ae60" : "1px solid #444",
+                width: 160,
+                height: 90,
               }}
-              onClick={() => setCurrentVideo(video.url)}
-              title={video.name}
             >
               <video
-                src={video.url}
-                style={{ width: "100%", height: 90, objectFit: "cover", borderRadius: 12 }}
+                src={url}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 muted
-                preload="metadata"
+                onClick={() => setCurrentVideo(url)}
               />
               {user && (
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(video.name);
-                  }}
+                  onClick={() => handleDelete(name)}
                   style={{
                     position: "absolute",
                     top: 6,
                     right: 6,
-                    background: "#e74c3c",
-                    color: "#fff",
+                    background: "rgba(231, 76, 60, 0.8)",
                     border: "none",
                     borderRadius: "50%",
-                    width: 24,
-                    height: 24,
+                    width: 26,
+                    height: 26,
+                    color: "#fff",
                     fontWeight: "bold",
                     cursor: "pointer",
-                    lineHeight: "22px",
+                    fontSize: 14,
                   }}
-                  aria-label={`Hapus video ${video.name}`}
+                  title="Hapus video"
                 >
                   ×
                 </button>
               )}
             </div>
           ))}
-        </section>
-
-        <footer style={{ marginTop: 48, textAlign: "center", color: "#666" }}>
-          <p>© {new Date().getFullYear()} FankyX Video App</p>
-        </footer>
+        </div>
       </main>
     </>
   );
