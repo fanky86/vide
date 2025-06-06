@@ -1,6 +1,6 @@
 'use client';
-
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -8,125 +8,102 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function AuthPage() {
+export default function RegisterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mode, setMode] = useState('login'); // login / register
+  const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const login = async () => {
+  const registerWithEmail = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setMessage(null);
+
+    const { error } = await supabase.auth.signUp({ email, password });
+
     setLoading(false);
-    if (error) alert(error.message);
-    else alert('Login berhasil!');
+
+    if (error) {
+      setMessage('Registrasi gagal: ' + error.message);
+    } else {
+      setMessage('Registrasi berhasil! Cek email Anda untuk verifikasi.');
+      setTimeout(() => {
+        router.push('/');
+      }, 2500);
+    }
   };
 
-  const register = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (error) alert(error.message);
-    else alert('Registrasi berhasil! Cek email untuk verifikasi.');
+  const registerWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setMessage('Login Google gagal: ' + error.message);
+    }
   };
 
   return (
-    <div
-      style={{
-        maxWidth: '400px',
-        margin: '3rem auto',
-        background: '#222',
-        padding: '2rem',
-        borderRadius: '12px',
-      }}
-    >
-      <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        {mode === 'login' ? 'Login' : 'Daftar'}
-      </h2>
+    <div style={{ maxWidth: 400, margin: '3rem auto', background: '#222', padding: 24, borderRadius: 12, color: 'white' }}>
+      <h2 style={{ marginBottom: '1rem' }}>Register</h2>
 
       <input
         type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
         placeholder="Email"
-        style={inputStyle}
-        autoComplete="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        style={{ width: '100%', padding: 12, marginBottom: 12, borderRadius: 8, border: 'none' }}
       />
       <input
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
         placeholder="Password"
-        style={inputStyle}
-        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        style={{ width: '100%', padding: 12, marginBottom: 16, borderRadius: 8, border: 'none' }}
       />
 
-      {mode === 'login' ? (
-        <button onClick={login} disabled={loading} style={btnStyle}>
-          {loading ? 'Loading...' : 'Login'}
-        </button>
-      ) : (
-        <button onClick={register} disabled={loading} style={btnStyle}>
-          {loading ? 'Loading...' : 'Daftar'}
-        </button>
-      )}
+      <button
+        onClick={registerWithEmail}
+        disabled={loading}
+        style={{
+          width: '100%',
+          padding: 12,
+          backgroundColor: '#4caf50',
+          border: 'none',
+          borderRadius: 8,
+          color: 'white',
+          fontSize: 16,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          marginBottom: 12,
+        }}
+      >
+        {loading ? 'Loading...' : 'Daftar dengan Email'}
+      </button>
 
-      <p style={{ marginTop: '1rem', textAlign: 'center', color: '#bbb' }}>
-        {mode === 'login' ? (
-          <>
-            Belum punya akun?{' '}
-            <button
-              style={linkBtn}
-              onClick={() => setMode('register')}
-              disabled={loading}
-            >
-              Daftar
-            </button>
-          </>
-        ) : (
-          <>
-            Sudah punya akun?{' '}
-            <button
-              style={linkBtn}
-              onClick={() => setMode('login')}
-              disabled={loading}
-            >
-              Login
-            </button>
-          </>
-        )}
-      </p>
+      <button
+        onClick={registerWithGoogle}
+        style={{
+          width: '100%',
+          padding: 12,
+          backgroundColor: '#db4437',
+          border: 'none',
+          borderRadius: 8,
+          color: 'white',
+          fontSize: 16,
+          cursor: 'pointer',
+        }}
+      >
+        Daftar dengan Google
+      </button>
+
+      {message && (
+        <p style={{ marginTop: 16, color: message.includes('berhasil') ? 'lightgreen' : 'salmon' }}>
+          {message}
+        </p>
+      )}
     </div>
   );
 }
-
-const inputStyle = {
-  width: '100%',
-  padding: '0.75rem',
-  marginBottom: '1rem',
-  borderRadius: '8px',
-  border: 'none',
-  fontSize: '1rem',
-};
-
-const btnStyle = {
-  width: '100%',
-  padding: '0.75rem',
-  backgroundColor: '#4caf50',
-  border: 'none',
-  color: 'white',
-  fontSize: '1rem',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  userSelect: 'none',
-};
-
-const linkBtn = {
-  background: 'none',
-  border: 'none',
-  color: '#4caf50',
-  cursor: 'pointer',
-  textDecoration: 'underline',
-  fontSize: '1rem',
-  userSelect: 'none',
-};
