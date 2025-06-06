@@ -1,5 +1,8 @@
+// Struktur dasar autentikasi + role admin
+// Gunakan Supabase Auth & Supabase Storage
+
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,102 +11,78 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const registerWithEmail = async () => {
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.push('/');
+    });
+  }, []);
+
+  const login = async () => {
     setLoading(true);
     setMessage(null);
 
-    const { error } = await supabase.auth.signUp({ email, password });
-
-    setLoading(false);
-
-    if (error) {
-      setMessage('Registrasi gagal: ' + error.message);
-    } else {
-      setMessage('Registrasi berhasil! Cek email Anda untuk verifikasi.');
-      setTimeout(() => {
-        router.push('/');
-      }, 2500);
-    }
-  };
-
-  const registerWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
+    const { error, data } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
+    setLoading(false);
     if (error) {
-      setMessage('Login Google gagal: ' + error.message);
+      setMessage('Login gagal: ' + error.message);
+    } else {
+      setMessage('Login berhasil!');
+      setTimeout(() => router.push('/'), 2000);
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '3rem auto', background: '#222', padding: 24, borderRadius: 12, color: 'white' }}>
-      <h2 style={{ marginBottom: '1rem' }}>Register</h2>
+    <div className="max-w-md mx-auto p-6 bg-gray-900 text-white rounded-xl mt-12">
+      <h2 className="text-2xl mb-4">Login</h2>
 
       <input
         type="email"
         placeholder="Email"
         value={email}
         onChange={e => setEmail(e.target.value)}
-        style={{ width: '100%', padding: 12, marginBottom: 12, borderRadius: 8, border: 'none' }}
+        className="w-full p-2 mb-3 rounded"
       />
       <input
         type="password"
         placeholder="Password"
         value={password}
         onChange={e => setPassword(e.target.value)}
-        style={{ width: '100%', padding: 12, marginBottom: 16, borderRadius: 8, border: 'none' }}
+        className="w-full p-2 mb-4 rounded"
       />
 
       <button
-        onClick={registerWithEmail}
+        onClick={login}
         disabled={loading}
-        style={{
-          width: '100%',
-          padding: 12,
-          backgroundColor: '#4caf50',
-          border: 'none',
-          borderRadius: 8,
-          color: 'white',
-          fontSize: 16,
-          cursor: loading ? 'not-allowed' : 'pointer',
-          marginBottom: 12,
-        }}
+        className="w-full bg-green-600 p-2 rounded hover:bg-green-700"
       >
-        {loading ? 'Loading...' : 'Daftar dengan Email'}
-      </button>
-
-      <button
-        onClick={registerWithGoogle}
-        style={{
-          width: '100%',
-          padding: 12,
-          backgroundColor: '#db4437',
-          border: 'none',
-          borderRadius: 8,
-          color: 'white',
-          fontSize: 16,
-          cursor: 'pointer',
-        }}
-      >
-        Daftar dengan Google
+        {loading ? 'Loading...' : 'Login'}
       </button>
 
       {message && (
-        <p style={{ marginTop: 16, color: message.includes('berhasil') ? 'lightgreen' : 'salmon' }}>
-          {message}
-        </p>
+        <p className="mt-4 text-sm text-center text-red-400">{message}</p>
       )}
+
+      <p className="text-sm mt-6 text-center">
+        Belum punya akun?{' '}
+        <a href="/register" className="text-blue-400 hover:underline">
+          Daftar sekarang
+        </a>
+      </p>
     </div>
   );
 }
+
+// Admin Panel (upload/hapus video) bisa dicek pakai email tertentu
+// Misalnya: admin@fankyxd.xyz bisa tampil tombol upload & delete
+// Halaman home bisa include cek role dan akses fitur sesuai email
