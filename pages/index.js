@@ -14,9 +14,10 @@ export default function Home() {
   const [videoList, setVideoList] = useState([]);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filteredVideos, setFilteredVideos] = useState([]);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -36,6 +37,18 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredVideos(videoList);
+    } else {
+      const term = searchTerm.toLowerCase();
+      const filtered = videoList.filter((video) =>
+        video.name.toLowerCase().includes(term)
+      );
+      setFilteredVideos(filtered);
+    }
+  }, [searchTerm, videoList]);
+
   async function fetchVideos() {
     const { data, error } = await supabase.storage
       .from("videos")
@@ -51,6 +64,7 @@ export default function Home() {
         })
       );
       setVideoList(videoURLs);
+      setFilteredVideos(videoURLs);
       setCurrentVideo(videoURLs[0]?.url || null);
     }
   }
@@ -82,6 +96,13 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const openLoginForm = () => {
+    setEmail("");
+    setPassword("");
+    setShowLoginForm(true);
+    setShowMenu(false);
+  };
+
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) alert("Login gagal: " + error.message);
@@ -103,42 +124,39 @@ export default function Home() {
     setUser(null);
   };
 
-  const filteredVideos = videoList.filter((video) =>
-    video.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div style={{ background: "#111", minHeight: "100vh", padding: "1rem", color: "#fff" }}>
-      {/* Menu pojok kanan */}
-      <div style={{ position: "absolute", top: "1rem", right: "1rem" }}>
-        <button onClick={() => setMenuOpen(!menuOpen)} style={{ fontSize: "1.5rem", background: "none", color: "white", border: "none", cursor: "pointer" }}>⋮</button>
-        {menuOpen && (
-          <div style={{ background: "#222", borderRadius: "8px", padding: "0.5rem", position: "absolute", top: "2.5rem", right: "0", zIndex: 1000 }}>
-            {!user && <div onClick={() => setShowLoginForm(true)} style={{ cursor: "pointer", padding: "0.25rem 0.5rem" }}>🔐 Login / Daftar</div>}
-            {user && <div onClick={handleLogout} style={{ cursor: "pointer", padding: "0.25rem 0.5rem" }}>🚪 Logout</div>}
-            <div style={{ cursor: "pointer", padding: "0.25rem 0.5rem" }}>⚙️ Pengaturan</div>
-            <div style={{ cursor: "pointer", padding: "0.25rem 0.5rem" }}>📞 Kontak</div>
-          </div>
-        )}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ margin: 0 }}>🎬 Video Publik</h2>
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setShowMenu(!showMenu)} style={{ fontSize: "1.5rem", background: "none", border: "none", color: "#fff" }}>⋮</button>
+          {showMenu && (
+            <div style={{ position: "absolute", right: 0, background: "#333", borderRadius: "8px", padding: "0.5rem", zIndex: 10 }}>
+              {!user && <button onClick={openLoginForm} style={{ background: "none", border: "none", color: "#fff", padding: "0.5rem" }}>Login</button>}
+              <button style={{ background: "none", border: "none", color: "#fff", padding: "0.5rem" }}>Kontak</button>
+              <button style={{ background: "none", border: "none", color: "#fff", padding: "0.5rem" }}>Pengaturan</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
+        <input
+          type="text"
+          placeholder="Cari video..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && setSearchTerm(e.target.value)}
+          style={{ flex: 1, padding: "0.5rem", borderRadius: "8px", border: "none" }}
+        />
+        <button onClick={() => setSearchTerm(searchTerm)} style={{ padding: "0.5rem 1rem", borderRadius: "8px", background: "#555", color: "#fff", border: "none" }}>Cari</button>
       </div>
 
       {showLoginForm && (
-        <div style={{ maxWidth: "600px", margin: "3rem auto", background: "#222", padding: "2rem", borderRadius: "12px" }}>
+        <div style={{ background: "#222", padding: "2rem", borderRadius: "12px", marginTop: "2rem" }}>
           <h2 style={{ textAlign: "center" }}>🔐 Login atau Daftar</h2>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem", borderRadius: "8px", border: "none" }}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem", borderRadius: "8px", border: "none" }}
-          />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem", borderRadius: "8px", border: "none" }} />
+          <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: "100%", padding: "0.5rem", marginBottom: "1rem", borderRadius: "8px", border: "none" }} />
           <button onClick={handleLogin} style={{ width: "100%", padding: "0.75rem", marginBottom: "0.5rem", background: "#4caf50", color: "white", border: "none", borderRadius: "8px" }}>Login</button>
           <button onClick={handleRegister} style={{ width: "100%", padding: "0.75rem", marginBottom: "0.5rem", background: "#2196f3", color: "white", border: "none", borderRadius: "8px" }}>Daftar</button>
           <button onClick={loginWithGoogle} style={{ width: "100%", padding: "0.75rem", background: "#f44336", color: "white", border: "none", borderRadius: "8px" }}>Login dengan Google</button>
@@ -146,44 +164,20 @@ export default function Home() {
       )}
 
       {user && (
-        <div style={{ maxWidth: "600px", margin: "1rem auto" }}>
+        <div style={{ marginTop: "2rem" }}>
           <p>👋 Hai, {user.email}</p>
+          <button onClick={handleLogout} style={{ marginBottom: "1rem", background: "#555", color: "white", border: "none", borderRadius: "6px", padding: "0.5rem 1rem" }}>Logout</button>
           <input type="file" accept="video/*" onChange={handleVideoUpload} disabled={uploading} style={{ display: "block", marginBottom: "1rem" }} />
           {uploading && <p>Mengunggah...</p>}
         </div>
       )}
 
       <div style={{ maxWidth: "900px", margin: "2rem auto 1rem" }}>
-        <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>🎥 Koleksi Video Publik</h2>
-
-        <input
-          type="text"
-          placeholder="Cari video..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ width: "100%", padding: "0.5rem", borderRadius: "8px", marginBottom: "1rem", border: "none" }}
-        />
-
         {currentVideo && (
-          <video
-            ref={videoRef}
-            src={currentVideo}
-            controls
-            autoPlay
-            style={{ width: "100%", borderRadius: "12px" }}
-          ></video>
+          <video ref={videoRef} src={currentVideo} controls autoPlay style={{ width: "100%", borderRadius: "12px" }}></video>
         )}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-            gap: "1rem",
-            marginTop: "1.5rem",
-            maxHeight: "500px",
-            overflowY: "auto",
-          }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "1rem", marginTop: "1.5rem", maxHeight: "500px", overflowY: "auto" }}>
           {filteredVideos.map((video, idx) => (
             <div key={idx} style={{ position: "relative" }}>
               <video
@@ -194,17 +188,7 @@ export default function Home() {
               {user && (
                 <button
                   onClick={() => handleDelete(video.name)}
-                  style={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    background: "red",
-                    color: "#fff",
-                    border: "none",
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
+                  style={{ position: "absolute", top: "8px", right: "8px", background: "red", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "6px", cursor: "pointer" }}
                 >
                   Hapus
                 </button>
@@ -214,7 +198,7 @@ export default function Home() {
         </div>
 
         <footer style={{ textAlign: "center", marginTop: "3rem", color: "#aaa" }}>
-          <p>© {new Date().getFullYear()} Video islamic</p>
+          <p>© {new Date().getFullYear()} FankyX Video App</p>
           <p><a href="#" style={{ color: "#ccc", textDecoration: "underline" }}>Contact</a> | <a href="#" style={{ color: "#ccc", textDecoration: "underline" }}>Terms</a></p>
         </footer>
       </div>
