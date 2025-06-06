@@ -6,6 +6,9 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(true); // Ganti ini sesuai autentikasi admin
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -31,6 +34,15 @@ export default function Home() {
     }
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setVideos(prev => [...prev, url]);
+    setCurrentVideo(url);
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -39,135 +51,63 @@ export default function Home() {
   }, []);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "black",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1.5rem",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "800px",
-          aspectRatio: "16 / 9",
-          position: "relative",
-          borderRadius: "12px",
-          overflow: "hidden",
-          boxShadow:
-            "0 4px 20px rgba(0,0,0,0.5), 0 0 10px rgba(255,0,0,0.5)",
-        }}
-      >
-        <video
-          ref={videoRef}
-          src="https://fdhdccjrmpwuyzptuhsd.supabase.co/storage/v1/object/public/videos//Tik_1750512376651.mp4"
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          poster="/thumbnail.jpg"
-          controls={false}
-        />
-
+    <div style={{ minHeight: "100vh", backgroundColor: "black", padding: "1rem" }}>
+      {currentVideo && (
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.7), transparent)",
-            opacity: 0,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-            padding: "1rem",
-            transition: "opacity 0.3s ease",
+            width: "100%",
+            maxWidth: "800px",
+            margin: "0 auto",
+            position: "relative",
+            borderRadius: "12px",
+            overflow: "hidden",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.5), 0 0 10px rgba(255,0,0,0.5)",
           }}
-          className="video-controls"
         >
-          <input
-            type="range"
-            value={progress}
-            readOnly
-            style={{
-              width: "100%",
-              height: "6px",
-              accentColor: "red",
-              cursor: "pointer",
-            }}
+          <video
+            ref={videoRef}
+            src={currentVideo}
+            style={{ width: "100%", height: "auto" }}
+            controls
           />
+        </div>
+      )}
 
+      {isAdmin && (
+        <div style={{ textAlign: "center", margin: "1rem 0" }}>
+          <input type="file" accept="video/*" onChange={handleUpload} />
+        </div>
+      )}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "1rem",
+          maxWidth: "800px",
+          margin: "2rem auto",
+          overflowY: "auto",
+        }}
+      >
+        {videos.map((vid, index) => (
           <div
+            key={index}
+            onClick={() => setCurrentVideo(vid)}
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "0.75rem",
-              color: "white",
-              alignItems: "center",
+              cursor: "pointer",
+              border: "2px solid red",
+              borderRadius: "10px",
+              overflow: "hidden",
             }}
           >
-            <div style={{ display: "flex", gap: "1rem" }}>
-              <button
-                onClick={togglePlay}
-                style={{
-                  padding: "0.5rem",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "50%",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1.25rem",
-                }}
-                aria-label={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? "⏸️" : "▶️"}
-              </button>
-
-              <button
-                onClick={() => {
-                  if (!videoRef.current) return;
-                  videoRef.current.muted = !videoRef.current.muted;
-                }}
-                style={{
-                  padding: "0.5rem",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "50%",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1.25rem",
-                }}
-                aria-label="Mute/Unmute"
-              >
-                🔈
-              </button>
-            </div>
-
-            <button
-              onClick={handleFullscreen}
-              style={{
-                padding: "0.5rem",
-                backgroundColor: "rgba(255,255,255,0.2)",
-                borderRadius: "50%",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "1.25rem",
-              }}
-              aria-label="Fullscreen"
-            >
-              ⛶
-            </button>
+            <video
+              src={vid}
+              style={{ width: "100%", height: "auto" }}
+              muted
+            />
           </div>
-        </div>
+        ))}
       </div>
-
-      <style>{`
-        .video-controls {
-          opacity: 0;
-        }
-        div:hover > .video-controls,
-        div:focus-within > .video-controls,
-        div.group:hover > .video-controls {
-          opacity: 1 !important;
-        }
-      `}</style>
     </div>
   );
 }
