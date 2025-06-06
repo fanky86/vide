@@ -63,7 +63,7 @@ export default function Home() {
       >
         <video
           ref={videoRef}
-          src="https://fdhdccjrmpwuyzptuhsd.supabase.co/storage/v1/object/public/videos/demo.mp4"
+          src="https://fdhdccjrmpwuyzptuhsd.supabase.co/storage/v1/object/public/videos//Tik_1750512376651.mp4"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
           poster="/thumbnail.jpg"
           controls={false}
