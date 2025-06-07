@@ -1,0 +1,23 @@
+{
+  "name": "vide",
+  "version": "1.0.0",
+  "description": "Panel video dengan Supabase: upload video, tampilkan, dan hapus khusus admin.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fanky86/vide.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fanky86/vide/issues"
+  },
+  "homepage": "https://github.com/fanky86/vide#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0"
+  }
+}
