@@ -4,6 +4,9 @@
   "description": "Panel video dengan Supabase: upload video, tampilkan, dan hapus khusus admin.",
   "main": "index.js",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,6 +21,9 @@
   },
   "homepage": "https://github.com/fanky86/vide#readme",
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.50.0",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }
