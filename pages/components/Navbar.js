@@ -63,7 +63,9 @@ export default function Navbar() {
               boxShadow: '0 0 10px rgba(0,0,0,0.8)',
               minWidth: '140px',
             }}
-          >
+          ><button onClick={() => { setMenuOpen(false); router.push('/profile'); }} style={menuBtn}>
+              Profile
+            </button>
             <button onClick={() => { setMenuOpen(false); router.push('/auth'); }} style={menuBtn}>
               Login
             </button>
